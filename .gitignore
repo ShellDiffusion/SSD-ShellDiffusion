@@ -1,0 +1,14 @@
+# OS / editor
+.DS_Store
+.vscode/
+.idea/
+
+# Python
+__pycache__/
+*.py[cod]
+.ipynb_checkpoints/
+
+# Downloaded data, checkpoints, and generated outputs (see Zenodo link in README)
+data/
+checkpoints/
+outputs/

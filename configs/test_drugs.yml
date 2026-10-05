@@ -1,0 +1,31 @@
+eval_freq: 1
+resume_from_path: "checkpoints/drugs_condition_mcf.pt"
+
+model_config:
+  type: diffusion # dsm and diffusion
+  network: dualenc
+  hidden_dim: 128
+  num_convs: 6
+  num_convs_local: 4
+  cutoff: 10.0
+  mlp_act: relu
+  beta_schedule: sigmoid
+  beta_start: 1.e-7
+  beta_end: 2.e-3
+  num_diffusion_timesteps: 1000
+  edge_order: 3
+  edge_encoder: mlp
+  smooth_conv: true
+  gamma_schedule_type: exp_inc  # or "linear" / "exp_inc" / "exp_dec" / "cosine" / "sqrt" / "sigmoid"
+  noise_ratio: 0.01 
+
+
+data_config:
+    dataset: 'geom_drugs'
+    path: './data/processed_drugs'
+    num_workers: 8
+    val_set_config:
+        batch_size: 128
+        mode: 'test'
+        max_confs: 10000
+        n_molecules: 1000
