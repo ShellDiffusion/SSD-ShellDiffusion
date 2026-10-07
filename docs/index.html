@@ -1,0 +1,372 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SSD: Shell-Guided Spherical Diffusion</title>
+  <meta name="description" content="SSD (NeurIPS 2026): a model-agnostic framework that replaces the Gaussian prior of 3D molecular diffusion models with a chemically scaled spherical shell and shell-aware dynamics.">
+  <meta property="og:title" content="SSD: Shell-Guided Spherical Diffusion for Molecular Geometry Generation">
+  <meta property="og:description" content="Replace the Gaussian prior with a chemically scaled spherical shell. NeurIPS 2026.">
+  <meta property="og:image" content="static/ssd_overview.jpg">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='13' fill='none' stroke='%23e0681a' stroke-width='2.5'/%3E%3Ccircle cx='16' cy='16' r='4' fill='%23e0681a'/%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
+  <link rel="stylesheet" href="static/style.css">
+</head>
+<body>
+
+<nav class="nav">
+  <div class="wrap">
+    <a class="brand" href="#top">S<span>S</span>D</a>
+    <ul>
+      <li><a href="#problem">Problem</a></li>
+      <li><a href="#method">Method</a></li>
+      <li><a href="#results">Results</a></li>
+      <li><a href="#citation">Citation</a></li>
+    </ul>
+  </div>
+</nav>
+
+<header class="hero" id="top">
+  <div class="wrap">
+    <div>
+      <span class="venue">NeurIPS 2026</span>
+      <h1>Shell-Guided <em>Spherical</em> Diffusion for Molecular Geometry Generation</h1>
+      <p class="sub">Start diffusion where molecules actually live. SSD replaces the Gaussian prior with a chemically scaled spherical shell and shell-aware dynamics. It is a drop-in change for any coordinate-space backbone.</p>
+      <p class="authors">
+        Yun-Yen Chuang<sup>1,2</sup> · Chen-Sheng Gu<sup>1,2</sup> · Hung-Min Hsu<sup>3</sup> · Kevin Lin<sup>4</sup> · Ray-I Chang<sup>2</sup>
+      </p>
+      <p class="affils"><sup>1</sup>Maxora AI · <sup>2</sup>National Taiwan University · <sup>3</sup>University of Washington · <sup>4</sup>Microsoft</p>
+      <div class="btns">
+        <a class="btn" href="static/SSD_NeurIPS2026.pdf">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 1.5h5.5L13 5v9.5H4z"/><path d="M9.5 1.5V5H13"/></svg>Paper
+        </a>
+        <a class="btn ghost" href="https://github.com/ShellDiffusion/SSD-ShellDiffusion">
+          <svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>Code
+        </a>
+        <a class="btn ghost" href="https://zenodo.org/records/18398184">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><ellipse cx="8" cy="3.5" rx="5.5" ry="2"/><path d="M2.5 3.5v9c0 1.1 2.46 2 5.5 2s5.5-.9 5.5-2v-9"/><path d="M2.5 8c0 1.1 2.46 2 5.5 2s5.5-.9 5.5-2"/></svg>Data &amp; Checkpoints
+        </a>
+        <a class="btn ghost" href="#citation">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 4h4v4H4.5L3 11zM9 4h4v4h-2.5L9 11z"/></svg>BibTeX
+        </a>
+      </div>
+    </div>
+    <div class="hero-viz" aria-label="Animation: atoms start on a spherical shell and contract into a molecule">
+      <svg id="hero-svg" role="img"></svg>
+      <div class="cap">atoms start on the shell r<sub>SSD</sub> ≈ r<sub>chem</sub>, then resolve into a molecule</div>
+    </div>
+  </div>
+</header>
+
+<section id="abstract">
+  <div class="wrap narrow">
+    <p class="eyebrow">Abstract</p>
+    <h2>The Gaussian prior is the wrong size for chemistry</h2>
+    <p class="lede">Diffusion models for 3D molecular geometry almost always use an isotropic Gaussian prior. Its Frobenius-norm scale \(\sigma_T\sqrt{3n}\) is set by the noise level and atom count, not by chemistry. The result is a scale mismatch that grows with \(n\) and produces high spatial entropy and unstable early trajectories.</p>
+    <p>We introduce <b>Shell-guided Spherical Diffusion (SSD)</b>, a model-agnostic framework that replaces the Gaussian prior with a chemically scaled spherical-shell initialization. It adds coordinated radial attraction, short-range repulsion, and an SE(3)-equivariant correction field to both the forward and reverse processes. Initialization and dynamics have to be designed together: neither a shell alone nor radial fields alone reproduces SSD's stability or accuracy.</p>
+    <p>We evaluate SSD on five coordinate-space backbones (GeoDiff, SubGDiff, EDM, SemlaFlow-style flow matching, and MCF), each under its own evaluation protocol. With identical training and sampling budgets, SSD consistently improves both quality and diversity. It lifts weaker backbones such as GeoDiff and EDM to match or surpass stronger diffusion-, VAE-, and flow-based baselines, without changing their architectures, loss functions, or training pipelines.</p>
+
+    <div class="tldr">
+      <div><div class="num">0</div><div class="lbl">new learnable parameters. Only the data-corruption process changes.</div></div>
+      <div><div class="num">5</div><div class="lbl">backbones improved: GeoDiff, SubGDiff, EDM, MCF, and flow matching.</div></div>
+      <div><div class="num">+32.5</div><div class="lbl">COV-R on GEOM-Drugs molecules with ≥ 50 atoms, where Gaussian baselines degrade most.</div></div>
+    </div>
+  </div>
+</section>
+
+<section id="problem">
+  <div class="wrap">
+    <div class="narrow">
+      <p class="eyebrow">01 · The problem</p>
+      <h2>A Gaussian in 3n dimensions is a thin shell, and its radius ignores chemistry</h2>
+      <p>By the Gaussian Annulus Theorem, a sample from \(\mathcal{N}(0, \sigma_T^2 I_{3n})\) almost always lands on a thin shell of radius \(\sigma_T\sqrt{3n}\). Drag the slider: as the atom count grows, the shell moves outward while its width stays roughly the same. The prior is effectively a sphere, but its size depends on <i>n</i> and \(\sigma_T\), not on how large the molecule is.</p>
+    </div>
+    <div class="annulus">
+      <div class="card">
+        <svg id="annulus-svg" role="img" aria-label="Histogram of prior sample norms"></svg>
+        <div class="slider-row">
+          <label for="n-slider">atoms <i>n</i></label>
+          <input id="n-slider" type="range" min="1" max="60" value="9">
+          <output id="n-out">9</output>
+        </div>
+        <div class="readout">
+          <div><div class="k">mean radius</div><div class="v" id="ann-r">–</div></div>
+          <div><div class="k">shell width (sd)</div><div class="v" id="ann-w">–</div></div>
+          <div><div class="k">relative width</div><div class="v" id="ann-rel">–</div></div>
+        </div>
+      </div>
+      <div>
+        <h3 style="margin-top:0">Why this hurts</h3>
+        <p>The diffusion starts from a sphere whose size has nothing to do with the target molecule, so the model first has to undo that mismatch:</p>
+        <ul>
+          <li><b>Distorted score magnitudes.</b> The network has to learn scores across a scale it never sees in data.</li>
+          <li><b>High spatial entropy.</b> Atoms start spread over a huge volume, which makes early trajectories long and wandering.</li>
+          <li><b>Worse for large molecules.</b> The radius grows like \(\sqrt{n}\), which is why Gaussian baselines degrade most on large GEOM-Drugs molecules.</li>
+        </ul>
+        <p class="muted">The histogram is a live Monte-Carlo estimate with σ = 1.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="method">
+  <div class="wrap">
+    <div class="narrow">
+      <p class="eyebrow">02 · Method</p>
+      <h2>Start on the right shell, then follow shell-aware dynamics</h2>
+      <p>SSD has two jointly designed components. Every state is centered to zero center of mass. Atoms start on a spherical shell of radius \(r_{\text{SSD}}\), calibrated to the mean radius of centered training conformations (6.37 Å for GEOM-QM9 and 21.16 Å for GEOM-Drugs). Atoms are assigned to shell points by a random permutation that is resampled for each trajectory. The reverse process then combines three drifts:</p>
+    </div>
+
+    <div class="eq">
+      \[
+      d\mathbf{x}_t^{(i)} = \big[\,{\color{#d9480f}\mathbf{v}_{\mathrm{rad}}^{(i)}} + {\color{#7c3aed}\mathbf{v}_{\mathrm{rep}}^{(i)}} + {\color{#0d9488}\mathbf{v}_{\mathrm{score}}^{(i)}}\,\big]\,dt + \sigma_t\, d\bar{\mathbf{w}}_t^{(i)},
+      \qquad
+      {\color{#d9480f}\mathbf{v}_{\mathrm{rad}}^{(i)}} = -\alpha_t\, \frac{\mathbf{x}_t^{(i)}}{\|\mathbf{x}_t^{(i)}\|}
+      \]
+      <div class="eq-terms">
+        <div style="border-color:var(--rad)"><b>Radial attraction</b>A normalized drift moves every atom at the same speed \(\alpha_t\) toward the shell center. This gives a linear contraction that does not depend on distance, unlike the exponential pull of Ornstein–Uhlenbeck dynamics.</div>
+        <div style="border-color:var(--rep)"><b>Short-range repulsion</b>This term enforces a minimum interatomic separation \(d_{\min}\), so atoms never collapse onto each other as the shell contracts.</div>
+        <div style="border-color:var(--score)"><b>SE(3)-equivariant correction</b>The backbone's own score network (GeoDiff, SubGDiff, EDM, MCF, …) refines local geometry. Its architecture and loss stay unchanged.</div>
+      </div>
+    </div>
+
+    <div class="card explorer" id="explorer">
+      <div class="explorer-grid">
+        <div class="steps" role="group" aria-label="Walk through the method">
+          <button class="step" data-step="init" aria-pressed="true">
+            <div class="n">STEP 1</div>
+            <div class="t"><span class="swatch" style="background:var(--ssd)"></span>Shell initialization</div>
+            <div class="d">SSD atoms start on a shell with r<sub>SSD</sub> ≈ r<sub>chem</sub>. The Gaussian prior (right) starts on a shell whose radius is set by σ<sub>T</sub>√3n. The dotted ring on the right marks the molecule's real size. The SSD panel is zoomed in so you can see the drifts.</div>
+          </button>
+          <button class="step" data-step="rad" aria-pressed="false">
+            <div class="n">STEP 2</div>
+            <div class="t"><span class="swatch" style="background:var(--rad)"></span>Radial attraction</div>
+            <div class="d">Every arrow has the same length because contraction is uniform-speed and does not depend on distance.</div>
+          </button>
+          <button class="step" data-step="rep" aria-pressed="false">
+            <div class="n">STEP 3</div>
+            <div class="t"><span class="swatch" style="background:var(--rep)"></span>Short-range repulsion</div>
+            <div class="d">Dashed halos show d<sub>min</sub>. A purple arrow appears only when two atoms come closer than d<sub>min</sub>.</div>
+          </button>
+          <button class="step" data-step="score" aria-pressed="false">
+            <div class="n">STEP 4</div>
+            <div class="t"><span class="swatch" style="background:var(--score)"></span>SE(3) correction</div>
+            <div class="d">The backbone's score field supplies what the radial drift does not: the local, molecule-specific geometry.</div>
+          </button>
+          <button class="step" data-step="all" aria-pressed="false">
+            <div class="n">ALL TOGETHER</div>
+            <div class="t">Play the full reverse process</div>
+            <div class="d">Compare the paths: a short, direct one for SSD, and a long, wandering one under the Gaussian prior.</div>
+          </button>
+        </div>
+
+        <div>
+          <div class="viewers">
+            <div class="viewer">
+              <svg id="view-ssd" role="img" aria-label="SSD reverse trajectories in 3D"></svg>
+              <div class="label"><span class="swatch" style="background:var(--ssd)"></span>SSD (shell prior)</div>
+              <div class="hint">drag to rotate · click an atom</div>
+              <div class="meta" id="meta-ssd"></div>
+            </div>
+            <div class="viewer">
+              <svg id="view-gauss" role="img" aria-label="Gaussian-prior reverse trajectories in 3D"></svg>
+              <div class="label"><span class="swatch" style="background:var(--gauss)"></span>Gaussian prior</div>
+              <div class="meta" id="meta-gauss"></div>
+            </div>
+          </div>
+
+          <div class="controls">
+            <button class="icon-btn" id="play"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M4 2l10 6-10 6z"/></svg>Play</button>
+            <div class="timeline">
+              <input id="t-slider" type="range" min="0" max="180" value="0" aria-label="Diffusion time">
+              <output id="t-out">t = 1.00·T</output>
+            </div>
+            <button class="icon-btn ghost" id="resample" title="Draw a new prior sample and noise">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M13.5 8A5.5 5.5 0 1 1 11.9 4.1"/><path d="M13.5 2v3h-3"/></svg>Resample
+            </button>
+          </div>
+          <div class="layers">
+            <label class="chip"><input type="checkbox" data-layer="trails"><span class="swatch" style="background:var(--ink-2)"></span>trajectories</label>
+            <label class="chip"><input type="checkbox" data-layer="rad"><span class="swatch" style="background:var(--rad)"></span><span>v<sub>rad</sub></span></label>
+            <label class="chip"><input type="checkbox" data-layer="rep"><span class="swatch" style="background:var(--rep)"></span><span>v<sub>rep</sub></span></label>
+            <label class="chip"><input type="checkbox" data-layer="score"><span class="swatch" style="background:var(--score)"></span><span>v<sub>score</sub></span></label>
+          </div>
+
+          <div class="radius-chart">
+            <svg id="radius-chart" role="img" aria-label="Mean atom radius over diffusion time"></svg>
+            <div class="legend">
+              <span><i style="border-color:var(--ssd)"></i><span>SSD mean ‖x<sub>t</sub>‖</span></span>
+              <span><i style="border-color:var(--gauss)"></i><span>Gaussian mean ‖x<sub>t</sub>‖</span></span>
+              <span><i style="border-color:var(--ink-2);border-top-style:dashed"></i><span>r<sub>chem</sub> of the target molecule</span></span>
+            </div>
+          </div>
+          <p class="note">This is a toy 14-atom illustration for intuition. The drifts are drawn schematically, and "path excess" is the trajectory length divided by the straight-line start-to-end distance. For measured trajectory statistics, see the table below and Section 4.5 of the paper.</p>
+        </div>
+      </div>
+    </div>
+
+    <figure>
+      <img src="static/ssd_overview.jpg" alt="SSD vs Gaussian-based diffusion overview figure" loading="lazy">
+      <figcaption><b>SSD vs. Gaussian-based diffusion.</b> <i>Left:</i> SSD starts on a chemically scaled spherical shell (r<sub>SSD</sub> ≈ r<sub>chem</sub>) and follows a direct, stable path guided by radial attraction, short-range repulsion, and SE(3)-equivariant correction. <i>Right:</i> Gaussian-based models start from a high-dimensional prior whose radius (r<sub>Gauss</sub> ≈ σ<sub>T</sub>√3n) is set by dimensionality alone. This creates a severe scale mismatch and long, wandering trajectories.</figcaption>
+    </figure>
+
+    <div class="narrow">
+      <h3>The shell and the dynamics only work together</h3>
+      <p>SSD preserves SE(3)-equivariance by construction and adds <b>no learnable parameters</b>. Each backbone keeps its architecture, loss form, and training pipeline; only the data-corruption process changes. The ablation on GEOM-QM9 (SubGDiff protocol) shows that neither component works on its own:</p>
+    </div>
+    <div class="table-wrap">
+      <table class="ablation">
+        <thead><tr><th>Variant</th><th>Init. / Prior</th><th>Dynamics</th><th>COV-R ↑</th><th>COV-P ↑</th><th>MAT-R ↓</th><th>MAT-P ↓</th></tr></thead>
+        <tbody>
+          <tr><td>(1) Gaussian baseline</td><td>Gaussian</td><td>v<sub>SubGD</sub></td><td>90.91</td><td>50.16</td><td>0.2460</td><td>0.6114</td></tr>
+          <tr><td>(2) Gaussian + rep./corr.</td><td>Gaussian</td><td>v<sub>rep</sub> + v<sub>score</sub></td><td>90.95</td><td>50.20</td><td>0.2455</td><td>0.6098</td></tr>
+          <tr><td>(3) Shell(r<sub>Gauss</sub>)</td><td>Shell(r<sub>Gauss</sub>)</td><td>None</td><td>90.92</td><td>50.18</td><td>0.2462</td><td>0.6107</td></tr>
+          <tr><td>(4) Shell(r<sub>Gauss</sub>) + SSD dyn.</td><td>Shell(r<sub>Gauss</sub>)</td><td>v<sub>rad</sub> + v<sub>rep</sub> + v<sub>score</sub></td><td>91.50</td><td>51.00</td><td>0.2443</td><td>0.6020</td></tr>
+          <tr class="ssd"><td>(5) SSD (ours)</td><td>Shell(r<sub>SSD</sub>)</td><td>v<sub>rad</sub> + v<sub>rep</sub> + v<sub>score</sub></td><td><b>93.20</b></td><td><b>63.50</b></td><td><b>0.2380</b></td><td><b>0.4100</b></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="muted" style="margin-top:10px">Guidance terms alone do not fix the radius mismatch (2). Projecting the Gaussian onto a dimension-derived shell changes almost nothing (3). The full gain needs a chemically calibrated shell together with shell-consistent dynamics (5).</p>
+
+    <div class="narrow">
+      <h3>Measured trajectory stability (GEOM-QM9)</h3>
+      <p>Radial deviation \(\mathbb{E}_t[\,|\lVert x_t\rVert - r_{\text{SSD}}|\,]\) measures how far a trajectory strays from the shell radius. Path excess \(\mathrm{PathLen}/\lVert x_T - x_0\rVert\) is the trajectory length relative to the direct shell-to-structure displacement.</p>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Method</th><th>Regime</th><th>Radial dev. ↓</th><th>Path excess ↓</th></tr></thead>
+        <tbody>
+          <tr><td>SubGDiff</td><td>SDE</td><td>0.4534</td><td>246.91</td></tr>
+          <tr class="ssd"><td>SSD-SubGDiff</td><td>SDE</td><td><b>0.1781</b></td><td><b>1.71</b></td></tr>
+          <tr class="group"><td>SemlaFlow</td><td>ODE</td><td>0.2145</td><td>1.29</td></tr>
+          <tr class="ssd"><td>SSD-Flow</td><td>ODE</td><td><b>0.1096</b></td><td><b>1.11</b></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<section id="results">
+  <div class="wrap">
+    <div class="narrow">
+      <p class="eyebrow">03 · Results</p>
+      <h2>One change, five backbones, consistent gains</h2>
+      <p>We evaluate each backbone and its SSD variant under that backbone's own protocol, with identical training and sampling budgets. Mean values are shown, and <b style="color:var(--ssd)">highlighted</b> numbers improve on the corresponding backbone. "–" marks a metric not reported in the original paper. SSD entries are single runs (training seed 42). The paper also reports medians (Table 1) and three-seed statistics (Table 3).</p>
+    </div>
+
+    <div class="tabs" role="tablist">
+      <button class="tab" role="tab" aria-selected="true" data-tab="t-subg">Conditional · SubGDiff protocol</button>
+      <button class="tab" role="tab" aria-selected="false" data-tab="t-mcf">Conditional · MCF protocol</button>
+      <button class="tab" role="tab" aria-selected="false" data-tab="t-unc">Unconditional refinement</button>
+    </div>
+
+    <div class="table-wrap" id="t-subg" role="tabpanel">
+      <table>
+        <thead><tr><th>Model</th><th>Dataset</th><th>COV-R (%) ↑</th><th>COV-P (%) ↑</th><th>MAT-R (Å) ↓</th><th>MAT-P (Å) ↓</th></tr></thead>
+        <tbody>
+          <tr><td>GeoDiff</td><td>QM9</td><td>80.36</td><td>53.66</td><td>0.2820</td><td>0.6673</td></tr>
+          <tr class="ssd"><td>SSD-GeoDiff</td><td>QM9</td><td><b>92.00</b></td><td><b>61.40</b></td><td><b>0.2425</b></td><td><b>0.4188</b></td></tr>
+          <tr class="group"><td>GeoDiff</td><td>Drugs</td><td>64.12</td><td>52.79</td><td>–</td><td>–</td></tr>
+          <tr class="ssd"><td>SSD-GeoDiff</td><td>Drugs</td><td><b>91.69</b></td><td><b>70.23</b></td><td>0.8463</td><td>1.1543</td></tr>
+          <tr class="group"><td>SubGDiff</td><td>QM9</td><td>90.91</td><td>50.16</td><td>0.2460</td><td>0.6114</td></tr>
+          <tr class="ssd"><td>SSD-SubGDiff</td><td>QM9</td><td><b>93.20</b></td><td><b>63.50</b></td><td><b>0.2380</b></td><td><b>0.4100</b></td></tr>
+          <tr class="group"><td>SubGDiff</td><td>Drugs</td><td>76.16</td><td>–</td><td>1.0003</td><td>–</td></tr>
+          <tr class="ssd"><td>SSD-SubGDiff</td><td>Drugs</td><td><b>92.50</b></td><td>71.10</td><td><b>0.8300</b></td><td>1.1400</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="table-wrap" id="t-mcf" role="tabpanel" hidden>
+      <table>
+        <thead><tr><th>Model</th><th>Dataset</th><th>COV-R (%) ↑</th><th>COV-P (%) ↑</th><th>MAT-R (Å) ↓</th><th>MAT-P (Å) ↓</th></tr></thead>
+        <tbody>
+          <tr><td>MCF</td><td>QM9</td><td>95.00</td><td>93.70</td><td>0.1030</td><td>0.1190</td></tr>
+          <tr class="ssd"><td>SSD-MCF</td><td>QM9</td><td><b>96.15</b></td><td><b>94.61</b></td><td><b>0.0993</b></td><td><b>0.1087</b></td></tr>
+          <tr class="group"><td>MCF</td><td>Drugs</td><td>84.70</td><td>66.80</td><td>0.3900</td><td>0.6180</td></tr>
+          <tr class="ssd"><td>SSD-MCF</td><td>Drugs</td><td><b>85.37</b></td><td><b>68.82</b></td><td><b>0.3792</b></td><td><b>0.6089</b></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="table-wrap" id="t-unc" role="tabpanel" hidden>
+      <table>
+        <thead><tr><th>Model</th><th>Dataset</th><th>AtomStab (%) ↑</th><th>MolStab (%) ↑</th><th>Valid (%) ↑</th><th>Unique (%) ↑</th></tr></thead>
+        <tbody>
+          <tr><td>EDM</td><td>QM9</td><td>98.7</td><td>82.0</td><td>91.9</td><td>98.9</td></tr>
+          <tr class="ssd"><td>SSD-EDM</td><td>QM9</td><td><b>99.3</b></td><td><b>99.8</b></td><td><b>100.0</b></td><td><b>100.0</b></td></tr>
+          <tr class="group"><td>EDM</td><td>Drugs</td><td>81.3</td><td>–</td><td>–</td><td>–</td></tr>
+          <tr class="ssd"><td>SSD-EDM</td><td>Drugs</td><td><b>90.5</b></td><td>70.1</td><td>98.5</td><td>99.2</td></tr>
+          <tr class="group"><td>SemlaFlow</td><td>QM9</td><td>99.9</td><td>99.7</td><td>99.4</td><td>95.4</td></tr>
+          <tr class="ssd"><td>SSD-Flow</td><td>QM9</td><td>99.9</td><td><b>99.9</b></td><td><b>100.0</b></td><td><b>100.0</b></td></tr>
+          <tr class="group"><td>SemlaFlow</td><td>Drugs</td><td>99.8</td><td>97.3</td><td>93.9</td><td>100.0</td></tr>
+          <tr class="ssd"><td>SSD-Flow</td><td>Drugs</td><td>99.8</td><td><b>97.6</b></td><td><b>100.0</b></td><td>100.0</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <figure>
+      <img src="static/fig2_convergence_steps_drift.jpg" alt="Convergence, sampling-step robustness, and long-range drift on QM9" loading="lazy">
+      <figcaption><b>Convergence, step robustness, and long-range drift on QM9.</b> Orange = SSD-SubGDiff, blue = SubGDiff, red = SSD-Flow, green = SemlaFlow. <i>Row 1:</i> SSD converges faster and beats the Gaussian baselines across training iterations (COV-R and MAT-R for conditional generation; Validity and Uniqueness for unconditional refinement). <i>Row 2:</i> SSD stays ahead from 20 to 100 sampling steps. <i>Row 3:</i> SSD-SubGDiff consistently beats SubGDiff once drift exceeds about 36.6 Å or the molecule has more than 21 atoms.</figcaption>
+    </figure>
+
+    <figure>
+      <img src="static/fig3_case_study.jpg" alt="Qualitative case studies of generated conformations" loading="lazy">
+      <figcaption><b>Qualitative case studies on QM9 (conditional generation).</b> (a) Long-drift regime (drift &gt; 36.6 Å). (b) Molecules with more than 21 atoms. SSD-SubGDiff produces stable, chemically plausible structures that match the reference, while SubGDiff often produces distorted or unstable geometries.</figcaption>
+    </figure>
+  </div>
+</section>
+
+<section id="citation">
+  <div class="wrap narrow">
+    <p class="eyebrow">Citation</p>
+    <h2>BibTeX</h2>
+    <pre class="bib"><button class="copy" type="button">Copy</button><code id="bibtex">@inproceedings{chuang2026ssd,
+  title     = {{SSD}: Shell-Guided Spherical Diffusion for Molecular Geometry Generation},
+  author    = {Chuang, Yun-Yen and Gu, Chen-Sheng and Hsu, Hung-Min and Lin, Kevin and Chang, Ray-I},
+  booktitle = {Advances in Neural Information Processing Systems (NeurIPS)},
+  year      = {2026}
+}</code></pre>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <span>SSD · NeurIPS 2026 · Maxora AI · National Taiwan University · University of Washington · Microsoft</span>
+    <span><a href="https://github.com/ShellDiffusion/SSD-ShellDiffusion">GitHub</a></span>
+  </div>
+</footer>
+
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
+<script defer src="static/ssd3d.js"></script>
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    if (window.renderMathInElement) {
+      renderMathInElement(document.body, {
+        delimiters: [{ left: "\\[", right: "\\]", display: true }, { left: "\\(", right: "\\)", display: false }],
+        throwOnError: false,
+      });
+    }
+    const tabs = document.querySelectorAll(".tab");
+    tabs.forEach((t) => t.addEventListener("click", () => {
+      tabs.forEach((x) => {
+        x.setAttribute("aria-selected", String(x === t));
+        document.getElementById(x.dataset.tab).hidden = x !== t;
+      });
+    }));
+    const copy = document.querySelector(".copy");
+    copy.addEventListener("click", async () => {
+      try {
+        await navigator.clipboard.writeText(document.getElementById("bibtex").textContent);
+        copy.textContent = "Copied";
+      } catch (e) {
+        copy.textContent = "Select & copy";
+      }
+      setTimeout(() => (copy.textContent = "Copy"), 1600);
+    });
+  });
+</script>
+</body>
+</html>
