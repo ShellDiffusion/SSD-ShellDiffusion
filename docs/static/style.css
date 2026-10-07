@@ -250,6 +250,35 @@ figure img { border-radius: 14px; background: #fff; width: 100%; }
 figcaption { font-size: 14.5px; color: var(--ink-2); margin-top: 10px; }
 figcaption b { color: var(--ink); }
 
+/* ---------- team ---------- */
+.avatars { display: inline-flex; margin: 0 0 12px; text-decoration: none; }
+.avatars img { width: 38px; height: 38px; border-radius: 50%; object-fit: cover; border: 2px solid var(--bg); margin-left: -10px; transition: transform .2s; }
+.avatars img:first-child { margin-left: 0; }
+.avatars:hover img { transform: translateY(-3px); }
+.avatars:hover img:nth-child(2) { transition-delay: .03s; } .avatars:hover img:nth-child(3) { transition-delay: .06s; }
+.avatars:hover img:nth-child(4) { transition-delay: .09s; } .avatars:hover img:nth-child(5) { transition-delay: .12s; }
+.people { display: grid; grid-template-columns: repeat(5, 1fr); gap: 20px; margin-top: 36px; }
+@media (max-width: 900px) { .people { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 520px) { .people { grid-template-columns: repeat(2, 1fr); } }
+.person { text-align: center; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.person img {
+  width: 100%; max-width: 168px; aspect-ratio: 1; border-radius: 50%; object-fit: cover; margin-bottom: 12px;
+  box-shadow: 0 0 0 1px var(--rule), 0 0 0 6px var(--bg), 0 0 0 7px transparent;
+  transition: box-shadow .3s, transform .3s;
+}
+.person:hover img { transform: translateY(-4px); box-shadow: 0 0 0 2px var(--ssd), 0 0 0 6px var(--bg), 0 0 32px 6px rgba(255,122,47,.35); }
+.person b { font-size: 16px; }
+.person span { font-size: 13.5px; color: var(--ink-3); }
+.orgs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-top: 48px; }
+@media (max-width: 760px) { .orgs { grid-template-columns: repeat(2, 1fr); } }
+.org {
+  height: 120px; border-radius: 18px; background: #f4f2ee; display: flex; align-items: center; justify-content: center;
+  padding: 18px; transition: transform .3s, box-shadow .3s;
+}
+.org:hover { transform: translateY(-4px); box-shadow: 0 12px 32px -8px rgba(255,122,47,.35); }
+.org img { max-width: 100%; width: auto; object-fit: contain; }
+.org.uw { font-family: var(--serif); font-size: 27px; color: #4b2e83; text-align: center; line-height: 1.1; }
+
 /* ---------- bibtex ---------- */
 pre.bib {
   position: relative; background: var(--bg-2); color: var(--ink); border: 1px solid var(--rule); border-radius: 16px;

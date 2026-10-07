@@ -26,6 +26,7 @@
       <li><a href="#how">How it works</a></li>
       <li><a href="#why">Why</a></li>
       <li><a href="#results">Results</a></li>
+      <li><a href="#team">Team</a></li>
       <li><a href="#citation">Cite</a></li>
     </ul>
   </div>
@@ -37,6 +38,7 @@
       <span class="venue">NeurIPS 2026</span>
       <h1>Shell-Guided <em>Spherical</em> Diffusion</h1>
       <p class="sub">Start molecular diffusion where molecules actually live: on a chemically scaled sphere, not a Gaussian.</p>
+      <a class="avatars" href="#team" aria-label="Meet the team"><img src="static/people/yunyen-chuang.jpg" alt=""><img src="static/people/chen-sheng-gu.jpg" alt=""><img src="static/people/hung-min-hsu.jpg" alt=""><img src="static/people/kevin-lin.jpg" alt=""><img src="static/people/ray-i-chang.jpg" alt=""></a>
       <p class="authors">Yun-Yen Chuang<sup>1,2</sup> · Chen-Sheng Gu<sup>1,2</sup> · Hung-Min Hsu<sup>3</sup> · Kevin Lin<sup>4</sup> · Ray-I Chang<sup>2</sup></p>
       <p class="affils"><sup>1</sup>Maxora AI · <sup>2</sup>National Taiwan University · <sup>3</sup>University of Washington · <sup>4</sup>Microsoft</p>
       <div class="btns">
@@ -249,6 +251,28 @@
         <p>Diffusion models for 3D molecular geometry almost always use an isotropic Gaussian prior. Its Frobenius-norm scale σ<sub>T</sub>√3n is set by the noise level and atom count, not by chemistry. The result is a scale mismatch that grows with n and produces high spatial entropy and unstable early trajectories. We introduce Shell-guided Spherical Diffusion (SSD), a model-agnostic framework that replaces the Gaussian prior with a chemically scaled spherical-shell initialization. It adds coordinated radial attraction, short-range repulsion, and an SE(3)-equivariant correction field to both the forward and reverse processes. Initialization and dynamics have to be designed together: neither a shell alone nor radial fields alone reproduces SSD's stability or accuracy. We evaluate SSD on five coordinate-space backbones (GeoDiff, SubGDiff, EDM, SemlaFlow-style flow matching, and MCF), each under its own evaluation protocol. With identical training and sampling budgets, SSD consistently improves both quality and diversity. It lifts weaker backbones such as GeoDiff and EDM to match or surpass stronger diffusion-, VAE-, and flow-based baselines. SSD is therefore a plug-in geometric enhancement for coordinate-space molecular generation models that changes neither their architectures, loss functions, nor training pipelines.</p>
       </div>
     </details>
+  </div>
+</section>
+
+<section id="team">
+  <div class="wrap">
+    <div class="narrow reveal">
+      <p class="eyebrow">Team</p>
+      <h2>The people behind <em>SSD</em></h2>
+    </div>
+    <div class="people reveal">
+      <div class="person"><img src="static/people/yunyen-chuang.jpg" alt="Yun-Yen Chuang" loading="lazy"><b>Yun-Yen Chuang</b><span>Maxora AI · NTU</span></div>
+      <div class="person"><img src="static/people/chen-sheng-gu.jpg" alt="Chen-Sheng Gu" loading="lazy"><b>Chen-Sheng Gu</b><span>Maxora AI · NTU</span></div>
+      <div class="person"><img src="static/people/hung-min-hsu.jpg" alt="Hung-Min Hsu" loading="lazy"><b>Hung-Min Hsu</b><span>University of Washington</span></div>
+      <div class="person"><img src="static/people/kevin-lin.jpg" alt="Kevin Lin" loading="lazy"><b>Kevin Lin</b><span>Microsoft</span></div>
+      <div class="person"><img src="static/people/ray-i-chang.jpg" alt="Ray-I Chang" loading="lazy"><b>Ray-I Chang</b><span>National Taiwan University</span></div>
+    </div>
+    <div class="orgs reveal">
+      <div class="org"><img src="static/logos/maxora.png" alt="Maxora AI" style="height:70px"></div>
+      <div class="org"><img src="static/logos/ntu.jpg" alt="National Taiwan University" style="height:84px"></div>
+      <div class="org uw"><span>University <i>of</i> Washington</span></div>
+      <div class="org"><img src="static/logos/microsoft.png" alt="Microsoft" style="height:62px"></div>
+    </div>
   </div>
 </section>
 
