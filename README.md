@@ -4,6 +4,7 @@
 <p align="center">
     Yun-Yen Chuang<sup>1,2</sup> · Chen-Sheng Gu<sup>1,2</sup> · Hung-Min Hsu<sup>3</sup> · Kevin Lin<sup>4</sup> · Ray-I Chang<sup>2</sup><br>
     <sup>1</sup>Maxora AI &nbsp; <sup>2</sup>National Taiwan University &nbsp; <sup>3</sup>University of Washington &nbsp; <sup>4</sup>Microsoft<br>
+    <a href="https://shelldiffusion.github.io/SSD-ShellDiffusion/">[Project Page]</a>
     <a href="TODO">[Paper]</a>
     <a href="TODO">[Poster]</a>
     <a href="TODO">[Slide]</a>
@@ -242,6 +243,7 @@ SSD/
 ├── builders/                # model / data builders
 ├── assets/                  # data and notebooks for reproducing the figures
 ├── img/                     # figures used in this README
+├── docs/                    # project page (GitHub Pages)
 ├── train.py                 # training
 ├── test_condition.py        # conditional generation (SubGDiff protocol)
 ├── test_mcf.py              # conditional generation (MCF protocol)
@@ -262,6 +264,24 @@ These are the official implementations of the backbones and baselines used in ou
 - [MCF](https://github.com/apple-aiml-research/ml-mcf)
 
 We thank the authors for releasing their code.
+
+## Authors
+<table align="center">
+  <tr>
+    <td align="center" width="150"><img src="docs/static/people/yunyen-chuang.jpg" width="110" alt="Yun-Yen Chuang"><br><b>Yun-Yen Chuang</b><br><sub>Maxora AI · NTU</sub></td>
+    <td align="center" width="150"><img src="docs/static/people/chen-sheng-gu.jpg" width="110" alt="Chen-Sheng Gu"><br><b>Chen-Sheng Gu</b><br><sub>Maxora AI · NTU</sub></td>
+    <td align="center" width="150"><img src="docs/static/people/hung-min-hsu.jpg" width="110" alt="Hung-Min Hsu"><br><b>Hung-Min Hsu</b><br><sub>University of Washington</sub></td>
+    <td align="center" width="150"><img src="docs/static/people/kevin-lin.jpg" width="110" alt="Kevin Lin"><br><b>Kevin Lin</b><br><sub>Microsoft</sub></td>
+    <td align="center" width="150"><img src="docs/static/people/ray-i-chang.jpg" width="110" alt="Ray-I Chang"><br><b>Ray-I Chang</b><br><sub>National Taiwan University</sub></td>
+  </tr>
+</table>
+
+<p align="center">
+  <img src="docs/static/logos/maxora-square.png" height="72" alt="Maxora AI">&nbsp;&nbsp;&nbsp;&nbsp;
+  <img src="docs/static/logos/ntu.png" height="72" alt="National Taiwan University">&nbsp;&nbsp;&nbsp;&nbsp;
+  <img src="docs/static/logos/uw.png" height="72" alt="University of Washington">&nbsp;&nbsp;&nbsp;&nbsp;
+  <img src="docs/static/logos/microsoft.png" height="60" alt="Microsoft">
+</p>
 
 ## Citation
 If you find this work useful, please cite:
