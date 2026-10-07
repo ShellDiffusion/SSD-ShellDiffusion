@@ -251,6 +251,12 @@ figcaption { font-size: 14.5px; color: var(--ink-2); margin-top: 10px; }
 figcaption b { color: var(--ink); }
 
 /* ---------- team ---------- */
+.avatars { display: inline-flex; margin: 0 0 12px; text-decoration: none; }
+.avatars img { width: 38px; height: 38px; border-radius: 50%; object-fit: cover; border: 2px solid var(--bg); margin-left: -10px; transition: transform .2s; }
+.avatars img:first-child { margin-left: 0; }
+.avatars:hover img { transform: translateY(-3px); }
+.avatars:hover img:nth-child(2) { transition-delay: .03s; } .avatars:hover img:nth-child(3) { transition-delay: .06s; }
+.avatars:hover img:nth-child(4) { transition-delay: .09s; } .avatars:hover img:nth-child(5) { transition-delay: .12s; }
 .people { display: grid; grid-template-columns: repeat(5, 1fr); gap: 20px; margin-top: 36px; }
 @media (max-width: 900px) { .people { grid-template-columns: repeat(3, 1fr); } }
 @media (max-width: 520px) { .people { grid-template-columns: repeat(2, 1fr); } }
