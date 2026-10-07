@@ -267,7 +267,7 @@ We thank the authors for releasing their code.
 If you find this work useful, please cite:
 ```bibtex
 @inproceedings{chuang2026ssd,
-  title     = {{SSD}: Shell-Guided Spherical Diffusion for Molecular Geometry Generation},
+  title     = "{SSD}: Shell-Guided Spherical Diffusion for Molecular Geometry Generation",
   author    = {Chuang, Yun-Yen and Gu, Chen-Sheng and Hsu, Hung-Min and Lin, Kevin and Chang, Ray-I},
   booktitle = {Advances in Neural Information Processing Systems (NeurIPS)},
   year      = {2026}
