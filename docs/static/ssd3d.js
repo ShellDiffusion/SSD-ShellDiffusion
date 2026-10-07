@@ -52,19 +52,10 @@
   const R_CHEM = X0.reduce((s, p) => s + len(p), 0) / N;
   const R_SSD = R_CHEM; // calibrated to the mean radius of centred conformations
   const R_EXT = Math.max(...X0.map(len));
-  const R_GAUSS = 2.6 * R_CHEM; // illustrative: Gaussian shell set by sigma_T * sqrt(3n), not chemistry
+  const R_GAUSS = 2.2 * R_CHEM; // illustrative: Gaussian shell set by sigma_T * sqrt(3n), not chemistry
   const D_MIN = 1.25;
   const ELEM = { C: "#a7b0bf", O: "#ff5a5f", N: "#5b8cff", F: "#3ddc84" };
   const COL = { ssd: "#ff7a2f", gauss: "#5aa2ff", rad: "#ffc14d", rep: "#b48cff", score: "#3ee6c1", bond: "#cdd3dd" };
-
-  function fibSphere(n) {
-    const pts = [], g = Math.PI * (3 - Math.sqrt(5));
-    for (let i = 0; i < n; i++) {
-      const y = 1 - (2 * (i + 0.5)) / n, r = Math.sqrt(1 - y * y);
-      pts.push([Math.cos(g * i) * r, y, Math.sin(g * i) * r]);
-    }
-    return pts;
-  }
 
   // ---------- simulation ----------
   const K = 200;
@@ -86,7 +77,11 @@
       return p;
     };
     const perms = [shuffle(), shuffle(), shuffle()];
-    const sites = fibSphere(N).map((p) => scl(p, R_SSD));
+    // x_T^(i) = r v / ||v||, v ~ N(0, I), then re-centre (paper, Sec. 3)
+    const raw = X0.map(() => [normal(r), normal(r), normal(r)]);
+    const onShell = raw.map((v) => scl(nrm(v), R_SSD));
+    const shift = onShell.reduce((m, p) => add(m, scl(p, 1 / N)), [0, 0, 0]);
+    const sites = onShell.map((p) => sub(p, shift));
     const S = X0.map((_, i) => sites[perms[2][i]]);
     const d = X0.map((x, i) => len(sub(S[i], x)));
     const sigma = R_GAUSS / 1.596;
@@ -94,7 +89,7 @@
     const c = gT.reduce((m, p) => add(m, scl(p, 1 / N)), [0, 0, 0]);
     gT = gT.map((p) => sub(p, c));
     const mk = () => X0.map(() => bridge(r));
-    return { perms, sites, S, d, dMax: Math.max(...d), gT, bF: mk(), bR: mk(), gF: mk(), gR: mk() };
+    return { perms, raw, onShell, shift, sites, S, d, dMax: Math.max(...d), gT, bF: mk(), bR: mk(), gF: mk(), gR: mk() };
   }
 
   // ---------- renderer ----------
@@ -110,6 +105,7 @@
         defs += `<radialGradient id="${id}-g-${e}"><stop offset="0" stop-color="${c}" stop-opacity=".55"/><stop offset="1" stop-color="${c}" stop-opacity="0"/></radialGradient>`;
       }
       for (const k of ["ssd", "gauss"]) {
+        defs += `<radialGradient id="${id}-cl-${k}"><stop offset="0" stop-color="${COL[k]}" stop-opacity=".22"/><stop offset=".6" stop-color="${COL[k]}" stop-opacity=".08"/><stop offset="1" stop-color="${COL[k]}" stop-opacity="0"/></radialGradient>`;
         defs += `<radialGradient id="${id}-sh-${k}" cx="40%" cy="35%" r="70%"><stop offset="0" stop-color="${COL[k]}" stop-opacity=".02"/><stop offset=".8" stop-color="${COL[k]}" stop-opacity=".10"/><stop offset="1" stop-color="${COL[k]}" stop-opacity=".28"/></radialGradient>`;
       }
       for (const k of ["rad", "rep", "score", "ssd", "gauss"]) {
@@ -186,6 +182,11 @@
         const col = COL[sh.kind];
         const o = this.P([0, 0, 0]);
         const rr = sh.R * this.scale * (this.dist / Math.sqrt(this.dist * this.dist - sh.R * sh.R));
+        if (sh.cloud) {
+          // an unstructured Gaussian cloud: no shell, just a soft blob
+          shellFill += `<circle cx="${f1(o.x)}" cy="${f1(o.y)}" r="${f1(rr)}" fill="url(#${id}-cl-${sh.kind})" opacity="${sh.alpha.toFixed(3)}"/>`;
+          continue;
+        }
         shellFill += `<circle cx="${f1(o.x)}" cy="${f1(o.y)}" r="${f1(rr)}" fill="url(#${id}-sh-${sh.kind})" opacity="${(sh.alpha * clamp(sh.draw * 1.4)).toFixed(3)}"/>`;
         const circ = TAU * rr;
         shellFill += `<circle cx="${f1(o.x)}" cy="${f1(o.y)}" r="${f1(rr)}" fill="none" stroke="${col}" stroke-width="1.6" opacity="${sh.alpha.toFixed(3)}" stroke-dasharray="${sh.dashed ? "5 6" : `${f1(circ * sh.draw)} ${f1(circ)}`}" transform="rotate(-90 ${f1(o.x)} ${f1(o.y)})"/>`;
@@ -234,7 +235,7 @@
       for (const s of sc.sites || []) {
         if (s.alpha <= 0.01) continue;
         const q = this.P(s.p);
-        sites += `<circle cx="${f1(q.x)}" cy="${f1(q.y)}" r="${f1(4.6 * q.f * (0.6 + 0.4 * s.alpha))}" fill="${COL.ssd}" filter="url(#${this.id}-glow)" opacity="${(s.alpha * (q.z >= 0 ? 1 : 0.45)).toFixed(2)}"/>`;
+        sites += `<circle cx="${f1(q.x)}" cy="${f1(q.y)}" r="${f1((s.size || 4.6) * q.f * (0.6 + 0.4 * s.alpha))}" fill="${s.color || COL.ssd}" filter="url(#${this.id}-glow)" opacity="${(s.alpha * (q.z >= 0 ? 1 : 0.45)).toFixed(2)}"/>`;
       }
       L.sites.innerHTML = sites;
 
@@ -243,7 +244,7 @@
       for (const l of sc.links || []) {
         if (l.alpha <= 0.01) continue;
         const a = this.P(l.a), b = this.P(l.b);
-        links += `<line x1="${f1(a.x)}" y1="${f1(a.y)}" x2="${f1(b.x)}" y2="${f1(b.y)}" stroke="${COL.ssd}" stroke-width="1.7" stroke-dasharray="4 4" opacity="${l.alpha.toFixed(2)}"/>`;
+        links += `<line x1="${f1(a.x)}" y1="${f1(a.y)}" x2="${f1(b.x)}" y2="${f1(b.y)}" stroke="${l.color || COL.ssd}" stroke-width="1.7" stroke-dasharray="4 4" opacity="${l.alpha.toFixed(2)}"/>`;
       }
       L.links.innerHTML = links;
 
@@ -342,99 +343,90 @@
     return pts;
   }
 
-  // 01 · Initialization
+  // 01 · Initialization: draw the shell and sample x_T on it
   const INIT = {
-    dur: 9,
+    dur: 7.5,
     captions: [
-      [0, "A training molecule, centred at <span class='k'>zero centre of mass</span>"],
-      [1.3, "Shell radius <span class='k'>r<sub>SSD</sub></span> = mean radius of centred training conformations"],
-      [2.6, "Candidate sites on the shell"],
-      [3.4, "Atoms ↔ sites by a <span class='k'>random permutation</span>, resampled every trajectory"],
-      [5.2, "Every atom starts on the shell: <span class='k'>x<sub>T</sub></span>"],
+      [0, "Draw a shell of radius <span class='k'>r<sub>SSD</sub></span>, the mean radius of centred training molecules"],
+      [1.4, "Sample n random Gaussian vectors v<sup>(i)</sup> ~ N(0, I)"],
+      [2.6, "Normalise each onto the shell: <span class='k'>x<sub>T</sub><sup>(i)</sup> = r · v<sup>(i)</sup> / ‖v<sup>(i)</sup>‖</span>"],
+      [3.9, "Re-centre to zero centre of mass"],
+      [4.9, "<span class='k'>x<sub>T</sub></span>: one shell point per atom, resampled for every trajectory"],
     ],
     gaussCaptions: [
-      [0, "Same molecule"],
-      [1.3, "Gaussian prior: radius ≈ σ<sub>T</sub>√3n, set by noise level and atom count"],
-      [5.2, "x<sub>T</sub> lands far outside the molecule's real scale"],
+      [0, "Gaussian prior"],
+      [1.4, "x<sub>T</sub> ~ N(0, σ<sub>T</sub><sup>2</sup> I): scattered points"],
+      [4.9, "Its scale is set by the noise level, not by chemistry"],
     ],
     drifts: () => ({}),
     ssd(t, sim) {
-      const draw = ease(clamp((t - 1.3) / 1.2));
-      const permIdx = Math.min(2, Math.max(0, Math.floor((t - 3.4) / 0.6)));
-      const perm = sim.perms[permIdx];
-      const pos = [], atoms = [], links = [], pulses = [];
-      for (let i = 0; i < N; i++) {
-        const t0 = 5.2 + i * 0.06, u = ease(clamp((t - t0) / 1.3));
-        const target = sim.sites[perm[i]];
-        let p = mix(X0[i], target, u);
-        p = add(p, scl(nrm(target), Math.sin(Math.PI * u) * 0.8));
-        pos.push(p);
-        atoms.push({ p, alpha: 1, glow: 0.45 + 0.4 * u });
-        const flash = t >= 3.4 ? 1 - ((t - 3.4) % 0.6) / 0.6 : 0;
-        if (t > 3.4) links.push({ a: p, b: target, alpha: (0.5 + 0.5 * flash * (t < 5.2 ? 1 : 0)) * (1 - u) });
-        pulses.push({ p: target, k: (t - t0 - 1.3) / 0.8 });
-      }
+      const draw = ease(clamp(t / 1.2));
+      const proj = ease(clamp((t - 2.6) / 1.1));
+      const cen = ease(clamp((t - 3.9) / 0.7));
+      const sites = [], links = [], pulses = [];
+      sim.raw.forEach((v, j) => {
+        const inner = scl(v, R_SSD * 0.3);
+        const p = sub(mix(inner, sim.onShell[j], proj), scl(sim.shift, cen));
+        sites.push({ p, alpha: clamp((t - 1.4 - j * 0.06) / 0.3), size: 5.5 });
+        links.push({ a: [0, 0, 0], b: p, alpha: 0.55 * clamp((t - 2.5) / 0.3) * (1 - clamp((t - 3.8) / 0.4)) });
+        pulses.push({ p, k: (t - 3.7) / 0.7 });
+      });
       return {
-        shells: [{ kind: "ssd", R: R_SSD, draw, alpha: 1, scan: clamp((t - 6.6) / 0.5) }],
-        sites: sim.sites.map((p, j) => ({ p, alpha: clamp((t - 2.6 - j * 0.05) / 0.25) })),
-        links, atoms, pulses,
-        bonds: bondsFor(pos),
-        com: clamp((t - 0.2) / 0.5) * (1 - clamp((t - 3.4) / 0.5)),
-        measure: { kind: "ssd", R: R_SSD, grow: ease(clamp((t - 1.5) / 0.9)), alpha: clamp((t - 1.5) / 0.3) * (1 - clamp((t - 5.0) / 0.4)), text: "r<tspan baseline-shift='sub' font-size='11'>SSD</tspan> ≈ r<tspan baseline-shift='sub' font-size='11'>chem</tspan>" },
+        shells: [{ kind: "ssd", R: R_SSD, draw, alpha: 1, scan: clamp((t - 4.9) / 0.5) }],
+        sites, links, pulses, atoms: [], bonds: [],
+        com: clamp((t - 3.9) / 0.3) * (1 - clamp((t - 5.0) / 0.4)),
+        measure: { kind: "ssd", R: R_SSD, grow: ease(clamp((t - 0.3) / 0.9)), alpha: clamp((t - 0.3) / 0.3) * (1 - clamp((t - 2.4) / 0.4)), text: "r<tspan baseline-shift='sub' font-size='11'>SSD</tspan>" },
       };
     },
     gauss(t, sim) {
-      const draw = ease(clamp((t - 1.3) / 1.2));
-      const pos = [], atoms = [];
-      for (let i = 0; i < N; i++) {
-        const u = ease(clamp((t - 5.2 - i * 0.06) / 1.3));
-        const p = mix(X0[i], sim.gT[i], u);
-        pos.push(p); atoms.push({ p, alpha: 1, glow: 0.4 });
-      }
       return {
-        shells: [{ kind: "gauss", R: R_GAUSS, draw, alpha: 1, dashed: true }],
-        atoms, bonds: bondsFor(pos),
-        com: clamp((t - 0.2) / 0.5) * (1 - clamp((t - 3.4) / 0.5)),
-        measure: { kind: "gauss", R: R_GAUSS, grow: ease(clamp((t - 1.5) / 0.9)), alpha: clamp((t - 1.5) / 0.3), text: "σ<tspan baseline-shift='sub' font-size='11'>T</tspan>√3n" },
+        shells: [{ kind: "gauss", R: R_GAUSS * 1.1, cloud: true, alpha: clamp(t / 1.2) }],
+        sites: sim.gT.map((p, j) => ({ p, alpha: clamp((t - 1.4 - j * 0.06) / 0.3), color: COL.gauss, size: 5.5 })),
+        pulses: sim.gT.map((p, j) => ({ p, k: (t - 1.4 - j * 0.06) / 0.6, color: COL.gauss })),
+        atoms: [], bonds: [],
       };
     },
   };
 
-  // 02 · Forward process (data -> shell)
+  // 02 · Forward process (data -> shell), used to corrupt training data
   const FWD = {
-    dur: 8,
+    dur: 8.5,
     captions: [
-      [0, "Forward: corrupt the molecule toward its shell sites"],
-      [0.8, "<span class='k'>Radial attraction</span>: every atom moves at the same speed α<sub>t</sub> toward its site"],
-      [3.6, "Near atoms land first. The contraction is linear, not exponential like OU"],
-      [6.0, "x<sub>T</sub>: all atoms on the shell"],
+      [0, "Forward (training): start from a centred molecule x<sub>0</sub>"],
+      [0.8, "Pair atoms with shell points by a <span class='k'>random permutation π</span>"],
+      [1.9, "Each atom moves straight to its point at the <span class='k' style='color:var(--rad)'>same speed α<sub>t</sub></span>"],
+      [4.6, "Nearer atoms arrive first and stop: linear, not exponential, contraction"],
+      [7.0, "x<sub>T</sub>: every atom on the shell"],
     ],
     gaussCaptions: [
-      [0, "Forward: diffuse toward an isotropic Gaussian"],
-      [2.2, "Atoms scatter far beyond the molecule's real scale"],
+      [0, "Gaussian forward: the same molecule"],
+      [1.9, "Noise diffuses atoms toward N(0, σ<sub>T</sub><sup>2</sup> I), far beyond the molecule's size"],
     ],
-    drifts: (t) => ({ rad: t > 0.8 && t < 6.2 }),
+    drifts: (t) => ({ rad: t > 1.9 && t < 7.0 }),
     ssd(t, sim) {
-      const t0 = 0.8, v = sim.dMax / 4.8;
+      const t0 = 1.9, v = sim.dMax / 4.8;
       const u = (i) => clamp((v * (t - t0)) / sim.d[i]);
       const posAt = (i, uu) => add(mix(X0[i], sim.S[i], uu), scl(at(sim.bF[i], uu), 0.3));
+      const permIdx = Math.min(2, Math.max(0, Math.floor((t - 0.8) / 0.35)));
+      const flash = t >= 0.8 && t < 1.9 ? 1 - ((t - 0.8) % 0.35) / 0.35 : 0;
       const pos = [], atoms = [], arrows = [], trails = [], pulses = [], links = [];
       for (let i = 0; i < N; i++) {
         const ui = u(i), p = posAt(i, ui);
         pos.push(p); atoms.push({ p, alpha: 1, glow: 0.45 + 0.4 * ui });
         if (ui > 0 && ui < 1) arrows.push({ i, kind: "rad", v: scl(nrm(sub(sim.S[i], p)), 0.85), alpha: clamp(t - t0) });
         trails.push({ pts: trailPts((s) => posAt(i, s), ui), color: COL.ssd, alpha: 0.75 });
-        links.push({ a: p, b: sim.S[i], alpha: 0.28 * (1 - ui) });
+        if (t >= 0.8) links.push({ a: p, b: sim.sites[sim.perms[permIdx][i]], alpha: (0.4 + 0.5 * flash) * clamp((t - 0.8) / 0.2) * (1 - ui) });
         pulses.push({ p: sim.S[i], k: (t - (t0 + sim.d[i] / v)) / 0.7 });
       }
       return {
         shells: [{ kind: "ssd", R: R_SSD, draw: 1, alpha: 1, scan: 1 }],
-        sites: sim.S.map((p) => ({ p, alpha: 0.7 })),
+        sites: sim.sites.map((p) => ({ p, alpha: 0.75 })),
         atoms, arrows, trails, pulses, links, bonds: bondsFor(pos),
+        com: clamp(t / 0.4) * (1 - clamp((t - 1.5) / 0.4)),
       };
     },
     gauss(t, sim) {
-      const t0 = 0.8;
+      const t0 = 1.9;
       const posAt = (i, g) => add(mix(X0[i], sim.gT[i], Math.sqrt(g)), scl(at(sim.gF[i], g), 4.2));
       const g = clamp((t - t0) / 5.4);
       const pos = [], atoms = [], trails = [];
@@ -443,7 +435,7 @@
         pos.push(p); atoms.push({ p, alpha: 1, glow: 0.4 });
         trails.push({ pts: trailPts((s) => posAt(i, s), g, 60), color: COL.gauss, alpha: 0.55, width: 1.1 });
       }
-      return { shells: [{ kind: "gauss", R: R_GAUSS, draw: 1, alpha: 0.8, dashed: true }], atoms, trails, bonds: bondsFor(pos) };
+      return { shells: [{ kind: "gauss", R: R_GAUSS * 1.1, cloud: true, alpha: clamp((t - t0) / 2) }], atoms, trails, bonds: bondsFor(pos), com: clamp(t / 0.4) * (1 - clamp((t - 1.5) / 0.4)) };
     },
   };
 
@@ -451,7 +443,7 @@
   const REV = {
     dur: 10,
     captions: [
-      [0, "Reverse: generate a molecule, starting from the shell"],
+      [0, "Reverse (generation): start from a shell sample x<sub>T</sub>"],
       [0.7, "<span class='k' style='color:var(--rad)'>v<sub>rad</sub></span>: pulls every atom inward at the same speed"],
       [2.8, "<span class='k' style='color:var(--rep)'>v<sub>rep</sub></span>: keeps atoms at least d<sub>min</sub> apart"],
       [4.8, "<span class='k' style='color:var(--score)'>v<sub>score</sub></span>: the backbone's SE(3)-equivariant network refines local geometry"],
@@ -517,7 +509,7 @@
         pos.push(p); atoms.push({ p, alpha: 1, glow: 0.4 });
         trails.push({ pts: trailPts((s) => posAt(i, s), g, 70), color: COL.gauss, alpha: 0.55, width: 1.1 });
       }
-      return { shells: [{ kind: "gauss", R: R_GAUSS, draw: 1, alpha: 0.8 * (1 - 0.5 * g), dashed: true }], atoms, trails, bonds: bondsFor(pos) };
+      return { shells: [{ kind: "gauss", R: R_GAUSS * 1.1, cloud: true, alpha: 1 - 0.7 * g }], atoms, trails, bonds: bondsFor(pos) };
     },
   };
 
@@ -528,28 +520,29 @@
     const root = document.getElementById("stage");
     if (!root) return;
     const svgS = document.getElementById("pane-ssd"), svgG = document.getElementById("pane-gauss");
-    const solo = { w: 960, h: 540 }, duo = { w: 600, h: 600 };
-    let sceneS = new Scene3D(svgS, solo.w, solo.h);
-    let sceneG = new Scene3D(svgG, duo.w, duo.h);
+    // both panes share one scale so the size mismatch is visible
+    const sceneS = new Scene3D(svgS, 600, 520);
+    const sceneG = new Scene3D(svgG, 600, 520);
+    const paneEls = [...root.querySelectorAll(".pane")];
     const capEl = document.getElementById("stage-caption");
     const capG = document.getElementById("stage-caption-g");
     const tabs = [...root.querySelectorAll(".stage-tab")];
     const fill = root.querySelector(".scrub .fill"), knob = root.querySelector(".scrub .knob");
     const playBtn = root.querySelector(".play");
     const pills = [...root.querySelectorAll(".pill")];
-    const cmp = document.getElementById("compare");
 
-    let sim = makeSim(7), story = 0, t = 0, playing = !reduceMotion, visible = false, compare = false;
+    let sim = makeSim(7), story = 0, t = 0, playing = !reduceMotion, visible = false;
     const view = { yaw: -0.5, pitch: 0.32 }, drag = { yaw: 0, pitch: 0 };
     let clock = 0;
 
-    function setCompare(on) {
-      compare = on;
-      root.classList.toggle("compare", on);
-      sceneS = new Scene3D(svgS, on ? duo.w : solo.w, on ? duo.h : solo.h);
+    // phones show one pane at a time with a switch; desktops show both side by side
+    const switches = [...root.querySelectorAll(".pane-switch button")];
+    switches.forEach((b, i) => b.addEventListener("click", () => {
+      switches.forEach((x, j) => x.setAttribute("aria-selected", String(i === j)));
+      paneEls.forEach((el, j) => el.classList.toggle("active", i === j));
       draw();
-    }
-    cmp.addEventListener("change", () => setCompare(cmp.checked));
+    }));
+    const shown = (el) => el.offsetParent !== null;
 
     function caption(list, el) {
       let txt = list[0][1];
@@ -560,15 +553,17 @@
     function draw() {
       const st = STORIES[story];
       const v = { yaw: view.yaw + drag.yaw + clock * 0.12, pitch: clamp(view.pitch + drag.pitch, -1.3, 1.3) };
-      const worldS = compare ? R_GAUSS * 1.25 : R_EXT * 1.08;
-      sceneS.setCamera(worldS, v);
-      sceneS.render(st.ssd(t, sim), clock);
-      if (compare) {
-        sceneG.setCamera(R_GAUSS * 1.25, v);
+      const world = R_GAUSS * 1.02;
+      if (shown(paneEls[0])) {
+        sceneS.setCamera(world, v);
+        sceneS.render(st.ssd(t, sim), clock);
+        caption(st.captions, capEl);
+      }
+      if (shown(paneEls[1])) {
+        sceneG.setCamera(world, v);
         sceneG.render(st.gauss(t, sim), clock);
         caption(st.gaussCaptions, capG);
       }
-      caption(st.captions, capEl);
       const fr = clamp(t / st.dur);
       fill.style.width = `${fr * 100}%`;
       knob.style.left = `${fr * 100}%`;
@@ -638,7 +633,7 @@
       requestAnimationFrame(loop);
     }
     // seek hook (also handy for screenshots): SSD.seek(storyIndex, seconds)
-    window.SSD = Object.assign(window.SSD || {}, { seek(i, tt, cmpOn) { if (cmpOn != null && cmpOn !== compare) { cmp.checked = cmpOn; setCompare(cmpOn); } story = i; t = tt; clock = tt; setPlaying(false); draw(); } });
+    window.SSD = Object.assign(window.SSD || {}, { seek(i, tt) { story = i; t = tt; clock = tt; setPlaying(false); draw(); } });
     setPlaying(playing);
     if (reduceMotion) { t = STORIES[0].dur; }
     draw();
@@ -669,8 +664,8 @@
         scene.halos = [];
         label = c < 4.5 ? "<b>reverse</b> · shell → molecule" : "a valid molecule";
       } else {
-        scene = FWD.ssd(Math.min((c - 7) * 1.25, 8), sim);
-        scene.links = []; scene.sites = [];
+        scene = FWD.ssd(Math.min(1.9 + (c - 7) * 1.25, 8.5), sim);
+        scene.links = []; scene.sites = []; scene.com = 0;
         label = "<b>forward</b> · molecule → shell";
       }
       scene.orbits = orbits;

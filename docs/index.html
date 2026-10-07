@@ -37,7 +37,7 @@
     <div>
       <span class="venue">NeurIPS 2026</span>
       <h1>Shell-Guided <em>Spherical</em> Diffusion</h1>
-      <p class="sub">Start molecular diffusion where molecules actually live: on a chemically scaled sphere, not a Gaussian.</p>
+      <p class="sub">Start molecular diffusion where molecules actually live: on a chemically scaled sphere, not a Gaussian. Same backbone, same loss, faster convergence.</p>
       <a class="avatars" href="#team" aria-label="Meet the team"><img src="static/people/yunyen-chuang.jpg" alt=""><img src="static/people/chen-sheng-gu.jpg" alt=""><img src="static/people/hung-min-hsu.jpg" alt=""><img src="static/people/kevin-lin.jpg" alt=""><img src="static/people/ray-i-chang.jpg" alt=""></a>
       <p class="authors">Yun-Yen Chuang<sup>1,2</sup> · Chen-Sheng Gu<sup>1,2</sup> · Hung-Min Hsu<sup>3</sup> · Kevin Lin<sup>4</sup> · Ray-I Chang<sup>2</sup></p>
       <p class="affils"><sup>1</sup>Maxora AI · <sup>2</sup>National Taiwan University · <sup>3</sup>University of Washington · <sup>4</sup>Microsoft</p>
@@ -66,7 +66,7 @@
     <div class="narrow reveal">
       <p class="eyebrow">How it works</p>
       <h2>Initialize. Corrupt. <em>Generate.</em></h2>
-      <p class="lede">Three steps, all on the same sphere. Watch them play, or drag to rotate.</p>
+      <p class="lede">SSD on the left, a standard Gaussian prior on the right, at the same scale. Drag to rotate.</p>
     </div>
 
     <div class="stage reveal" id="stage">
@@ -75,11 +75,15 @@
         <button class="stage-tab" role="tab" aria-selected="false"><span class="n">02</span><span class="t">Forward</span><span class="bar"></span></button>
         <button class="stage-tab" role="tab" aria-selected="false"><span class="n">03</span><span class="t">Reverse</span><span class="bar"></span></button>
       </div>
+      <div class="pane-switch" role="tablist" aria-label="Choose prior">
+        <button aria-selected="true"><span class="dot" style="background:var(--ssd)"></span>SSD</button>
+        <button aria-selected="false"><span class="dot" style="background:var(--gauss)"></span>Gaussian prior</button>
+      </div>
       <div class="stage-body">
         <div class="panes">
-          <div class="pane">
+          <div class="pane active">
             <svg id="pane-ssd" role="img" aria-label="SSD animation"></svg>
-            <span class="pane-label"><span class="dot" style="background:var(--ssd)"></span>SSD</span>
+            <span class="pane-label"><span class="dot" style="background:var(--ssd)"></span>SSD · shell prior</span>
             <div class="caption" id="stage-caption" aria-live="polite"></div>
           </div>
           <div class="pane">
@@ -97,10 +101,9 @@
           <span class="pill" data-k="rep"><span class="dot"></span>v_rep</span>
           <span class="pill" data-k="score"><span class="dot"></span>v_score</span>
         </div>
-        <label class="switch"><input type="checkbox" id="compare"><span class="sw"></span>vs Gaussian</label>
       </div>
     </div>
-    <p class="muted" style="margin-top:12px">Toy 14-atom molecule for intuition. Not model output.</p>
+    <p class="muted" style="margin-top:12px">Toy 14-atom molecule for intuition, not model output. Both panes use the same scale.</p>
 
     <div class="eq-strip reveal">
       <div class="eq">
@@ -112,6 +115,19 @@
         <div class="term"><span class="dot" style="background:var(--rad)"></span><span><b>Radial attraction</b> · same speed α<sub>t</sub> for every atom</span></div>
         <div class="term"><span class="dot" style="background:var(--rep)"></span><span><b>Short-range repulsion</b> · keeps atoms ≥ d<sub>min</sub> apart</span></div>
         <div class="term"><span class="dot" style="background:var(--score)"></span><span><b>SE(3) correction</b> · the backbone's own score network</span></div>
+      </div>
+    </div>
+
+    <div class="ts reveal">
+      <div class="ts-card">
+        <p class="eyebrow">Training</p>
+        <h3>Still trained, but it converges faster</h3>
+        <p>The backbone is trained as usual. Only its noisy inputs change: they are drawn in closed form around SSD's straight-line forward path instead of Gaussian noise. The loss form, optimizer, and training cost stay the same. Training curves converge faster and higher (Fig. 2a–d).</p>
+      </div>
+      <div class="ts-card">
+        <p class="eyebrow">Sampling</p>
+        <h3>A shell-aware hybrid sampler</h3>
+        <p>Generation starts from a fresh shell sample and follows v<sub>rad</sub> + v<sub>rep</sub> + v<sub>score</sub>. The atom-to-point pairing π is unknown at inference, so v<sub>rad</sub> pulls toward the centre. This is a hybrid sampler, not an exact time reversal of the forward process.</p>
       </div>
     </div>
   </div>
@@ -143,11 +159,11 @@
   <div class="wrap">
     <div class="narrow reveal">
       <p class="eyebrow">Results</p>
-      <h2>One change. Five backbones. <em>All better.</em></h2>
+      <h2>One change. Five backbones. <em>Consistent gains.</em></h2>
     </div>
     <div class="stats reveal">
-      <div><div class="num" data-count="0">0</div><div class="lbl">new learnable parameters</div></div>
       <div><div class="num" data-count="5">0</div><div class="lbl">backbones improved: GeoDiff, SubGDiff, EDM, MCF, Flow</div></div>
+      <div><div class="num" data-count="0">0</div><div class="lbl">extra learnable parameters in the diffusion backbones, with unchanged training cost</div></div>
       <div><div class="num"><span data-count="32.5" data-prefix="+">+0</span></div><div class="lbl">COV-R on Drugs molecules with ≥ 50 atoms</div></div>
     </div>
 
@@ -161,13 +177,14 @@
         <span><span class="dot" style="background:var(--gauss)"></span>Backbone</span>
         <span><span class="dot" style="background:var(--ssd)"></span>+ SSD</span>
         <span class="muted" id="db-metric"></span>
+        <span class="muted">MCF · Drugs gain is not statistically significant (Table 3)</span>
       </div>
     </div>
 
     <details class="more">
       <summary>Full tables, ablation &amp; trajectory statistics</summary>
       <div class="body">
-        <p>Each backbone is evaluated under its own protocol with identical training and sampling budgets. Mean values are shown. "–" means the metric is not reported in the original paper. SSD entries are single runs (seed 42); see Tables 1 and 3 in the paper for medians and three-seed statistics.</p>
+        <p>Each backbone is evaluated under its own protocol with identical training and sampling budgets. Mean values are shown. "–" means the metric is not reported in the original paper. SSD entries are single runs (seed 42); see Tables 1 and 3 in the paper for medians and three-seed statistics. The MCF gain on Drugs (+0.76 COV-R) is sign-consistent but not statistically significant. SSD-Flow also swaps SemlaFlow's encoder for a lighter EDM-style one (Appendix M.1).</p>
         <h4>Conditional generation · SubGDiff protocol</h4>
         <div class="table-wrap"><table>
           <thead><tr><th>Model</th><th>Data</th><th>COV-R ↑</th><th>COV-P ↑</th><th>MAT-R ↓</th><th>MAT-P ↓</th></tr></thead>
