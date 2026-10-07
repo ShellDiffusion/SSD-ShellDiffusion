@@ -277,7 +277,6 @@ figcaption b { color: var(--ink); }
 }
 .org:hover { transform: translateY(-4px); box-shadow: 0 12px 32px -8px rgba(255,122,47,.35); }
 .org img { max-width: 100%; width: auto; object-fit: contain; }
-.org.uw { font-family: var(--serif); font-size: 27px; color: #4b2e83; text-align: center; line-height: 1.1; }
 
 /* ---------- bibtex ---------- */
 pre.bib {
