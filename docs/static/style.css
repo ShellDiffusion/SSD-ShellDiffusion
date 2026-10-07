@@ -66,6 +66,10 @@ b, strong { font-weight: 600; }
   letter-spacing: .12em; text-transform: uppercase; color: var(--ssd);
   border: 1px solid rgba(255,122,47,.5); border-radius: 999px; padding: 5px 14px;
 }
+.venue-row { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.venue-logo { display: inline-flex; align-items: center; background: #f4f2ee; border-radius: 12px; padding: 4px 12px; }
+.venue-logo img { height: 58px; width: auto; display: block; }
+@media (max-width: 560px) { .venue-logo img { height: 46px; } }
 .venue::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--ssd); box-shadow: 0 0 10px var(--ssd); animation: blink 2s infinite; }
 @keyframes blink { 50% { opacity: .3; } }
 .hero h1 {
