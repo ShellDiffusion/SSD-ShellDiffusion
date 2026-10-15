@@ -315,3 +315,5 @@ footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; g
   .reveal { opacity: 1; transform: none; transition: none; }
   .venue::before, .scroll-cue::after { animation: none; }
 }
+.authors a, .person b a { color: inherit; text-decoration: none; border-bottom: 1px solid var(--ink-3); }
+.authors a:hover, .person b a:hover { color: var(--ssd); border-color: var(--ssd); }

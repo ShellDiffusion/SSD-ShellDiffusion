@@ -3,12 +3,67 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>SSD: Shell-Guided Spherical Diffusion</title>
-  <meta name="description" content="SSD (NeurIPS 2026): replace the Gaussian prior of 3D molecular diffusion models with a chemically scaled spherical shell and shell-aware dynamics.">
+  <title>SSD: Shell-Guided Spherical Diffusion for Molecular Geometry Generation (NeurIPS 2026)</title>
+  <meta name="description" content="SSD (NeurIPS 2026) replaces the Gaussian prior of 3D molecular diffusion models with a chemically scaled spherical shell and shell-aware dynamics. A plug-in for GeoDiff, SubGDiff, EDM, SemlaFlow and MCF that improves quality and diversity and converges faster.">
+  <meta name="author" content="Yun-Yen Chuang, Chen-Sheng Gu, Hung-Min Hsu, Kevin Lin, Ray-I Chang">
+  <link rel="canonical" href="https://shelldiffusion.github.io/SSD-ShellDiffusion/">
+
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="SSD: Shell-Guided Spherical Diffusion">
+  <meta property="og:url" content="https://shelldiffusion.github.io/SSD-ShellDiffusion/">
   <meta property="og:title" content="SSD: Shell-Guided Spherical Diffusion for Molecular Geometry Generation">
   <meta property="og:description" content="Start diffusion where molecules actually live. NeurIPS 2026.">
-  <meta property="og:image" content="static/ssd_overview.jpg">
+  <meta property="og:image" content="https://shelldiffusion.github.io/SSD-ShellDiffusion/static/ssd_overview.jpg">
+  <meta property="og:image:width" content="1800">
+  <meta property="og:image:height" content="723">
+  <meta property="og:image:alt" content="SSD overview: atoms start on a chemically scaled spherical shell and contract into a molecule">
   <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="SSD: Shell-Guided Spherical Diffusion for Molecular Geometry Generation">
+  <meta name="twitter:description" content="Start diffusion where molecules actually live. NeurIPS 2026.">
+  <meta name="twitter:image" content="https://shelldiffusion.github.io/SSD-ShellDiffusion/static/ssd_overview.jpg">
+
+  <!-- Google Scholar (Highwire Press tags) -->
+  <meta name="citation_title" content="SSD: Shell-Guided Spherical Diffusion for Molecular Geometry Generation">
+  <meta name="citation_author" content="Chuang, Yun-Yen">
+  <meta name="citation_author_institution" content="Maxora AI">
+  <meta name="citation_author_institution" content="National Taiwan University">
+  <meta name="citation_author" content="Gu, Chen-Sheng">
+  <meta name="citation_author_institution" content="Maxora AI">
+  <meta name="citation_author_institution" content="National Taiwan University">
+  <meta name="citation_author" content="Hsu, Hung-Min">
+  <meta name="citation_author_institution" content="University of Washington">
+  <meta name="citation_author" content="Lin, Kevin">
+  <meta name="citation_author_institution" content="Microsoft">
+  <meta name="citation_author" content="Chang, Ray-I">
+  <meta name="citation_author_institution" content="National Taiwan University">
+  <meta name="citation_publication_date" content="2026">
+  <meta name="citation_conference_title" content="Advances in Neural Information Processing Systems (NeurIPS 2026)">
+  <meta name="citation_pdf_url" content="https://shelldiffusion.github.io/SSD-ShellDiffusion/static/SSD_NeurIPS2026.pdf">
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "ScholarlyArticle",
+    "headline": "SSD: Shell-Guided Spherical Diffusion for Molecular Geometry Generation",
+    "alternativeHeadline": "Shell-guided Spherical Diffusion (SSD)",
+    "description": "A model-agnostic framework that replaces the Gaussian prior of 3D molecular diffusion models with a chemically scaled spherical-shell initialization and coordinated radial attraction, short-range repulsion and an SE(3)-equivariant correction field.",
+    "url": "https://shelldiffusion.github.io/SSD-ShellDiffusion/",
+    "image": "https://shelldiffusion.github.io/SSD-ShellDiffusion/static/ssd_overview.jpg",
+    "datePublished": "2026",
+    "inLanguage": "en",
+    "keywords": ["molecular geometry generation", "diffusion models", "3D molecule generation", "conformer generation", "spherical shell prior", "flow matching", "NeurIPS 2026"],
+    "isPartOf": {"@type": "PublicationEvent", "name": "Advances in Neural Information Processing Systems (NeurIPS 2026)"},
+    "author": [
+      {"@type": "Person", "name": "Yun-Yen Chuang", "url": "https://yunyenchuang.com", "sameAs": ["https://yunyenchuang.com"], "affiliation": [{"@type": "Organization", "name": "Maxora AI"}, {"@type": "Organization", "name": "National Taiwan University"}]},
+      {"@type": "Person", "name": "Chen-Sheng Gu", "affiliation": [{"@type": "Organization", "name": "Maxora AI"}, {"@type": "Organization", "name": "National Taiwan University"}]},
+      {"@type": "Person", "name": "Hung-Min Hsu", "affiliation": {"@type": "Organization", "name": "University of Washington"}},
+      {"@type": "Person", "name": "Kevin Lin", "affiliation": {"@type": "Organization", "name": "Microsoft"}},
+      {"@type": "Person", "name": "Ray-I Chang", "affiliation": {"@type": "Organization", "name": "National Taiwan University"}}
+    ],
+    "encoding": {"@type": "MediaObject", "encodingFormat": "application/pdf", "contentUrl": "https://shelldiffusion.github.io/SSD-ShellDiffusion/static/SSD_NeurIPS2026.pdf"},
+    "sameAs": ["https://github.com/ShellDiffusion/SSD-ShellDiffusion", "https://zenodo.org/records/18398184"]
+  }
+  </script>
   <meta name="theme-color" content="#07090d">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='13' fill='none' stroke='%23ff7a2f' stroke-width='2.5'/%3E%3Ccircle cx='16' cy='16' r='4' fill='%23ff7a2f'/%3E%3C/svg%3E">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -39,7 +94,7 @@
       <h1>Shell-Guided <em>Spherical</em> Diffusion</h1>
       <p class="sub">Start molecular diffusion where molecules actually live: on a chemically scaled sphere, not a Gaussian. Plugs into existing backbones, keeps their loss form, and converges faster.</p>
       <a class="avatars" href="#team" aria-label="Meet the team"><img src="static/people/yunyen-chuang.jpg" alt=""><img src="static/people/chen-sheng-gu.jpg" alt=""><img src="static/people/hung-min-hsu.jpg" alt=""><img src="static/people/kevin-lin.jpg" alt=""><img src="static/people/ray-i-chang.jpg" alt=""></a>
-      <p class="authors">Yun-Yen Chuang<sup>1,2</sup> · Chen-Sheng Gu<sup>1,2</sup> · Hung-Min Hsu<sup>3</sup> · Kevin Lin<sup>4</sup> · Ray-I Chang<sup>2</sup></p>
+      <p class="authors"><a href="https://yunyenchuang.com" rel="author">Yun-Yen Chuang</a><sup>1,2</sup> · Chen-Sheng Gu<sup>1,2</sup> · Hung-Min Hsu<sup>3</sup> · Kevin Lin<sup>4</sup> · Ray-I Chang<sup>2</sup></p>
       <p class="affils"><sup>1</sup>Maxora AI · <sup>2</sup>National Taiwan University · <sup>3</sup>University of Washington · <sup>4</sup>Microsoft</p>
       <div class="btns">
         <a class="btn" href="static/SSD_NeurIPS2026.pdf">
@@ -278,7 +333,7 @@
       <h2>The people behind <em>SSD</em></h2>
     </div>
     <div class="people reveal">
-      <div class="person"><img src="static/people/yunyen-chuang.jpg" alt="Yun-Yen Chuang" loading="lazy"><b>Yun-Yen Chuang</b><span>Maxora AI · NTU</span></div>
+      <div class="person"><img src="static/people/yunyen-chuang.jpg" alt="Yun-Yen Chuang" loading="lazy"><b><a href="https://yunyenchuang.com" rel="author">Yun-Yen Chuang</a></b><span>Maxora AI · NTU</span></div>
       <div class="person"><img src="static/people/chen-sheng-gu.jpg" alt="Chen-Sheng Gu" loading="lazy"><b>Chen-Sheng Gu</b><span>Maxora AI · NTU</span></div>
       <div class="person"><img src="static/people/hung-min-hsu.jpg" alt="Hung-Min Hsu" loading="lazy"><b>Hung-Min Hsu</b><span>University of Washington</span></div>
       <div class="person"><img src="static/people/kevin-lin.jpg" alt="Kevin Lin" loading="lazy"><b>Kevin Lin</b><span>Microsoft</span></div>
