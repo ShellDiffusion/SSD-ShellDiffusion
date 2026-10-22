@@ -252,7 +252,9 @@ SSD/
 ├── eval_analyze.py          # stability / validity / uniqueness evaluation
 ├── eval_prop.py             # property evaluation (Psi4 via psikit)
 ├── visualization.ipynb      # conformation visualization (Figure 3)
-└── env.yml                  # conda environment
+├── env.yml                  # conda environment
+├── LICENSE                  # MIT License
+└── THIRD_PARTY_NOTICES.md   # licenses of code adapted from GeoDiff, EDM, and MCF
 ```
 
 ## Baseline Model Reference
@@ -293,3 +295,8 @@ If you find this work useful, please cite:
   year      = {2026}
 }
 ```
+
+## License
+This project is released under the [MIT License](LICENSE).
+
+It includes code adapted from [GeoDiff](https://github.com/MinkaiXu/GeoDiff) (MIT), [EDM](https://github.com/ehoogeboom/e3_diffusion_for_molecules) (MIT), and [MCF](https://github.com/apple-aiml-research/ml-mcf) (Apple sample code license). Those files remain under their original licenses; see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) for the file list and license texts. Institution logos and author photos are not covered by the MIT License.
